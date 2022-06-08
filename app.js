@@ -3,9 +3,8 @@
  * Create images around 50x70 px and put them in the subdir photos, numbered 0.png,1.png, ..., n.png
  * and set 
  */
-// when using these values remove them from the html file
-// const image_count=1;
-// const imagedir = 'images/';
+const image_count=1;
+const imagedir = 'images/';
 const width=51;
 const height=78;
 const imageExtension = '.png';
