@@ -4,3 +4,5 @@ Just place a bunch of images, roughly 50x70px, in the image directory, named 0.p
 Adjust the image count in app.js and see a digital clock with your favorite images!
 
 Have fun.
+
+Have a look for yourself with this [demo](https://jsfiddle.net/gh/get/library/pure/hhidding/familytime/tree/master/demo)
