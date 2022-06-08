@@ -1,7 +1,13 @@
-window.onload = function() {
-    initAnimations();
-    test = window.requestAnimationFrame(loop);
-};
+/*
+ * Using your own pictures:
+ * Create images around 50x70 px and put them in the subdir photos, numbered 0.png,1.png, ..., n.png
+ * and set 
+ */
+const image_count=1;
+const imagedir = 'images/';
+const width=51;
+const height=78;
+const imageExtension = '.png';
 
 const nrs = [ 
     [[1,0], [2,0], [0,1], [3,1], [0,2], [3,2], [0,3], [3,3], [0,4], [3,4], [1,5], [2,5]],               //0
@@ -21,26 +27,10 @@ const colonOffset1 = [500,0];
 const colonOffset2 = [1100,0];
 const screenOffsetX = 100;
 const screenOffsetY = 200;
+//position of the digits
 const offset = [
     [0,0] , [250,0] , [600,0] , [850,0], [1200,0] , [1450,0]
 ]
-
-const width=51;
-const height=78;
-const canvas = document.getElementById('root')
-    
-const btn = document.getElementById('btn')
-const ctx = canvas.getContext('2d')
-const photodir = 'photos/';
-const PHOTO_COUNT=1;
-const animationDuration = 500;
-
-var faces = [];
-var clockFaces = [];
-var face;
-var test;
-var animate=[0,0,0,0,0,0];
-var previous=[0,0,0,0,0,0];
 
 const STYLE_NONE=0;
 const STYLE_FADE=1;
@@ -53,44 +43,60 @@ class AnimationStyle {
     }
 }
 
-var animations = {};
-function initAnimations() {
-    animations[0] = new AnimationStyle(STYLE_TRAVEL,8000);
-    animations[1] = new AnimationStyle(STYLE_TRAVEL,8000);
-    animations[2] = new AnimationStyle(STYLE_TRAVEL,4000);
-    animations[3] = new AnimationStyle(STYLE_TRAVEL,4000);
-    animations[4] = new AnimationStyle(STYLE_TRAVEL,2000);
-    animations[5] = new AnimationStyle(STYLE_FADE,500);
+const animations = [
+    new AnimationStyle(STYLE_TRAVEL,8000),
+    new AnimationStyle(STYLE_TRAVEL,8000),
+    new AnimationStyle(STYLE_TRAVEL,4000),
+    new AnimationStyle(STYLE_TRAVEL,4000),
+    new AnimationStyle(STYLE_TRAVEL,2000),
+    new AnimationStyle(STYLE_FADE,500)
+];
 
+const canvas = document.getElementById('root')
+const ctx = canvas.getContext('2d')
+
+var images = [];
+var clockImages = [];
+var currentImage;
+var animate=[0,0,0,0,0,0];
+var previous=[0,0,0,0,0,0];
+
+function init() {
     var date = new Date();
     for(var i=0;i<=6;i++) {
         previous[i]= getClockInteger(i,date);
     }
 
-    loadPhotos();
-    initClockFaces();
+    loadImages();
+    initClockImages();
 }
 
-function loadPhotos() {
-    for(var i=0;i<PHOTO_COUNT; i++) {
+window.onload = function() {
+    init();
+    window.requestAnimationFrame(loop);
+};
+
+
+function loadImages() {
+    for(var i=0;i<image_count; i++) {
         var face  = new Image();
-        face.src = photodir + i + '.png';
-        faces[i] = face;
+        face.src = imagedir + i + imageExtension;
+        images[i] = face;
     }
-    face = faces[0];
+    face = images[0];
 }
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
 
-function initClockFaces() {
+function initClockImages() {
     for(var nr=0;nr<6;nr++) {
         var faces= [];
         for(var f=0;f<=13;f++) {
-            faces[f] = getRandomInt(PHOTO_COUNT);
+            faces[f] = getRandomInt(image_count);
         }
-        clockFaces[nr] = faces;
+        clockImages[nr] = faces;
     }
 }
 
@@ -159,14 +165,14 @@ function getClockInteger(pos,date) {
 
 function loop(){ 
     drawTime();
-    test = window.requestAnimationFrame(loop)   // Needed to keep looping
+    window.requestAnimationFrame(loop)   
 }   
 
 function drawNr(pos, clockDigit) {
     var image_offset = offset[pos];
     nr = nrs[clockDigit];
     for(var i=0;i<nr.length;i++) {
-        face = faces[clockFaces[pos][i]];
+        currentImage = images[clockImages[pos][i]];
         drawImageAt(image_offset, nr[i]);
     }
 }
@@ -178,77 +184,83 @@ function animateNr(pos, fromDigit, toDigit, perc, animation) {
     var maxnr = Math.max(from.length,to.length);
    
     for(var i=0;i<maxnr;i++) {
-        face = faces[clockFaces[pos][i]];
-        var pf=null;
-        var pt=null;
+        currentImage = images[clockImages[pos][i]];
+        var point_from = null;
+        var point_to = null;
         if(i<from.length) {
-            pf = from[i];
+            point_from = from[i];
         }
         if(i<to.length) {
-            pt = to[i];
+            point_to = to[i];
         }
         if (animation.name == STYLE_FADE) {
-            fadeImageAt(image_offset, pf,pt, perc);
+            fadeImageAt(image_offset, point_from,point_to, perc);
         } else if (animation.name == STYLE_TRAVEL) {
-            travelImageAt(image_offset, pf,pt, perc);
+            travelImageAt(image_offset, point_from,point_to, perc);
+        } else if (animation.name == STYLE_NONE) {
+            drawImageAt(image_offset, point_to);
+        } else {
+            console.error("Unknown animation name '%s' ", animation.name);
         }
     }
 }
 
 function drawColon() {
-    var s = new Date().getMilliseconds();
-    if(s > 500) {
-        face = faces[clockFaces[0][12]];
+    var current_millis = new Date().getMilliseconds();
+    if (current_millis > 500) {
+        currentImage = images[clockImages[0][12]];
         colon.forEach( element => drawImageAt(colonOffset1, element) );
-        face = faces[clockFaces[1][12]];
+        currentImage = images[clockImages[1][12]];
         colon.forEach( element => drawImageAt(colonOffset2, element) );
     }
 }
 
-function drawImageAt(offset, p) {
-    x = p[0] * width + offset[0] + screenOffsetX;
-    y = p[1] * height + offset[1] + screenOffsetY;
-    ctx.drawImage(face, x, y);
+function drawImageAt(offset, point) {
+    if (point != null) { 
+        x = point[0] * width + offset[0] + screenOffsetX;
+        y = point[1] * height + offset[1] + screenOffsetY;
+        ctx.drawImage(currentImage, x, y);
+    }
 }
 
-function fadeImageAt(offset, pf,pt, perc) {
-    if(pf !=null ) {
+function fadeImageAt(offset, point_from, point_to, perc) {
+    if (point_from !=null ) {
         ctx.globalAlpha = 1-perc;
-        x = pf[0] * width + offset[0] + screenOffsetX;
-        y = pf[1] * height + offset[1] + screenOffsetY;
-        ctx.drawImage(face, x, y);
+        x = point_from[0] * width + offset[0] + screenOffsetX;
+        y = point_from[1] * height + offset[1] + screenOffsetY;
+        ctx.drawImage(currentImage, x, y);
     }
     
-    if(pt !=null ) {
+    if (point_to !=null ) {
         ctx.globalAlpha = perc;
-        x = pt[0] * width + offset[0] + screenOffsetX;
-        y = pt[1] * height + offset[1] + screenOffsetY;
-        ctx.drawImage(face, x, y);
+        x = point_to[0] * width + offset[0] + screenOffsetX;
+        y = point_to[1] * height + offset[1] + screenOffsetY;
+        ctx.drawImage(currentImage, x, y);
     }
     ctx.globalAlpha = 1;
 }
 
-function travelImageAt(offset, pf,pt, perc) {
-    if(pf ==null ) {
+function travelImageAt(offset, point_from, point_to, perc) {
+    if (point_from == null ) {
         ctx.globalAlpha = perc;
-        fx = pt[0] * width + offset[0] + screenOffsetX;
-        fy = pt[1] * height + offset[1] + screenOffsetY;
+        fx = point_to[0] * width + offset[0] + screenOffsetX;
+        fy = point_to[1] * height + offset[1] + screenOffsetY;
     } else {
-        fx = pf[0] * width + offset[0] + screenOffsetX;
-        fy = pf[1] * height + offset[1] + screenOffsetY;
+        fx = point_from[0] * width + offset[0] + screenOffsetX;
+        fy = point_from[1] * height + offset[1] + screenOffsetY;
     }
     
-    if(pt ==null ) {
+    if (point_to == null) {
         ctx.globalAlpha = 1-perc;
         tx = fx;
         ty = fy;
     } else {
-        tx = pt[0] * width + offset[0] + screenOffsetX;
-        ty = pt[1] * height + offset[1] + screenOffsetY;
+        tx = point_to[0] * width + offset[0] + screenOffsetX;
+        ty = point_to[1] * height + offset[1] + screenOffsetY;
     }
 
     x = fx + (tx-fx) * perc; 
     y = fy + (ty-fy) * perc; 
-    ctx.drawImage(face, x, y);
+    ctx.drawImage(currentImage, x, y);
     ctx.globalAlpha = 1;
 }
